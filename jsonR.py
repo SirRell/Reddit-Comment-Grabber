@@ -3,39 +3,55 @@ import xlwt
 from xlwt import Workbook
 from tkinter import *
 from tkinter.filedialog import asksaveasfile, askopenfilename
-from tkinter import messagebox
+from tkinter import messagebox, font
 from RCG_GUI import GUI
 import json
-import traceback
+import re  # Delimiter separation
+
 
 # TODO: Make a way to easily ignore specific users' comments
 # TODO: Make things prettier
 
 def open_gameList_file():
-    # Open Game List file
-    gamesListFile: str = askopenfilename(filetypes=[("Text Documents", "*.txt")])
-    if gamesListFile is not None:
-        open(gamesListFile)
-        # read_gamesList_file()
-        gamesListFileName = gamesListFile
+    try:
+        # Open Game List file
+        gamesListTitle: str = askopenfilename(filetypes=[("Text Documents", "*.txt")])
+        if gamesListTitle != '':
+            with(open(gamesListTitle, 'r')) as gamesListFile:
+                app.gameListLabel["text"] = f"Games List File: {gamesListTitle}"
+                read_gamesList_file(gamesListFile)
+            app.chkbx_filterComments.select()
 
-        global gamesListLabel
-        app.gameListLabel["text"] = f"Games List File: {gamesListFileName}"
+    except FileNotFoundError:
+        messagebox.showerror("Error", "The file entered cannot be found!")
 
 
-def read_gamesList_file():
-    print()
-    # TODO: Read the text file and exclude any comment that does NOT have any game title in the list
+gameList = None
+def read_gamesList_file(file):
+    global gameList
+    gameList = []
+    splitFile = re.split("\n|,", file.read())
+    for text in splitFile:
+        if text == "":
+            continue
+        gameList.append(text.strip())
+    gameList = set(gameList)
 
 
 def ShowLoadingWindow(window):
-    label = Label(window, text="PLEASE WAIT\nGetting all of the comments!")
-    label.pack(fill='x', padx=50, pady=30)
+    myFont = font.Font(family='Times', size=24)
+    label = Label(window, text="PLEASE WAIT\nGetting all of the comments!", font = myFont)
+    label.pack(fill='both', padx=50, pady=50)
     window.geometry(app.alignstr)
     window.resizable(width=False, height=False)
 
 
 def GrabAllCommentsFromURL():
+    # Check to see if "Filter comments" is checked and there is a file
+    if app.filterGamesChckbxVar.get() and gameList is None:
+        messagebox.showerror("Error", "Cannot filter comments.\nThere is no game list provided.")
+        return
+
     try:
         loadingWindow = Toplevel()
         ShowLoadingWindow(loadingWindow)
@@ -45,6 +61,7 @@ def GrabAllCommentsFromURL():
         submission = reddit.submission(url=contestURL)
         submission.comments.replace_more(limit=None)
 
+        # Create global workbook object
         global wb
         wb = Workbook()
 
@@ -55,58 +72,81 @@ def GrabAllCommentsFromURL():
         sheet1.write(0, 1, "Redditor")
         sheet1.write(0, 2, "Game Requested")  # Will be used with filtering comments
         sheet1.write(0, 3, "Full Comment")
+        excelRandNum = xlwt.Formula("RAND()")
 
-        # TODO: Show user the file is being read/created
-        for index, comment in enumerate(submission.comments.list(), start = 1):
-            # This is an Excel function to have a random number in the cell
-            excelRandNum = xlwt.Formula("RAND()")
+        # Moved iterable out of the for loop code-line so it can be altered inside the addComment method
+        index = 1
+        for comment in submission.comments.list():
+            def addComment(game=""):
+                nonlocal index
 
-            # Write the Excel function to the first cell
-            sheet1.write(index, 0, excelRandNum)
+                # This is an Excel function to have a random number in the cell
+                # Write the Excel function to the first cell
+                sheet1.write(index, 0, excelRandNum)
 
-            author = comment.author.name
-            # Write the Author of the comment in the next cell
-            sheet1.write(index, 1, author)
+                author = comment.author.name
+                # Write the Author of the comment in the next cell
+                sheet1.write(index, 1, author)
 
-            # Write the comment in the next cell
-            sheet1.write(index, 3, comment.body)
+                # Write the comment in the next cell
+                sheet1.write(index, 3, comment.body)
 
-        loadingWindow.destroy
+                if game != "":
+                    sheet1.write(index, 2, game)
+                    index += 1
+                else:
+                    index += 1
+
+            if app.filterGamesChckbxVar.get():
+                for gameName in gameList:
+                    if gameName in comment.body:
+                        addComment(gameName)
+            else:
+                addComment()
+
+        loadingWindow.destroy()
         window.update()
 
         save_file()
-
+    except ValueError:
+        messagebox.showerror("Error", "There is not a reddit post link provided!")
+        loadingWindow.destroy()
     except praw.exceptions.InvalidURL as e:
         messagebox.showerror("Error", f"{e} is not a reddit post link!")
+        loadingWindow.destroy()
     except Exception as e:
-        traceback.print_exc()
-        print(e)
+        messagebox.showerror("Error",
+                             f"An error has ocurred:\n{e}\nPlease report bug at https://github.com/SirRell/Reddit-Comment-Grabber/issues")
         loadingWindow.destroy()
 
 
 def save_file():
     types = [("Excel Workbook", "*.xls")]
-    saveFile = asksaveasfile(initialfile="Untitled.xlsx", filetypes=types,
-                             defaultextension=".xls")
-    wb.save(saveFile.name)
-
-    # TODO: Error handling
+    try:
+        saveFile = asksaveasfile(initialfile="Untitled.xlsx", filetypes=types,
+                                 defaultextension=".xls")
+        # Saving global workbook
+        wb.save(saveFile.name)
+    except AttributeError:
+        if messagebox.askyesno("Question", "Are you sure you do NOT want to save the file?") == False:
+            save_file()
+    except NameError:
+        messagebox.askyesno("Question", "Are you sure you do NOT want to save the file?")
 
 
 if __name__ == "__main__":
     # --Initialize--
     creds = "client credentials.txt"
-    with open(creds, 'r') as file:
-        credFile = json.load(file)
+    with open(creds, 'r') as credsFile:
+        clientCreds = json.load(credsFile)
 
         # Create a new praw Object
-        global reddit
         reddit = praw.Reddit(
-            client_id = credFile["client_id"],
-            client_secret = credFile["client_secret"],
-            password = credFile["password"],  # Optional for viewing public comments
-            user_agent = credFile["user_agent"],
-            username = credFile["username"],  # Optional for viewing public comments
+            client_id=clientCreds["client_id"],
+            client_secret=clientCreds["client_secret"],
+            password=clientCreds["password"],
+            user_agent=clientCreds["user_agent"],
+            username=clientCreds["username"],
         )
 
         # --- TO GET AUTHORIZATION LINK ---
@@ -118,7 +158,7 @@ if __name__ == "__main__":
         # )
         # reddit.read_only = True
         # print(reddit.auth.url(["identity"], "false", "permanent"))
-
+        # -----------------------------------
     # Create a new tkinter window object
     window = Tk()
     window.iconbitmap("icon_transparent.ico")

@@ -53,7 +53,7 @@ class GUI:
         label_gamesList["font"] = ft
         label_gamesList["fg"] = "#333333"
         label_gamesList["justify"] = "left"
-        label_gamesList["text"] = "Games List:"
+        label_gamesList["text"] = "Games List: (NONE)"
         label_gamesList.place(x=60, y=20, width=485, height=30)
 
         self.addGameListBtn = tk.Button(root)
@@ -66,15 +66,16 @@ class GUI:
         btn_addGamesList["text"] = "Add\nGames List"
         btn_addGamesList.place(x=80, y=110, width=100, height=45)
 
-        chkbx_filterComments = tk.Checkbutton(root)
+        self.filterGamesChckbxVar = tk.IntVar()
+        self.chkbx_filterComments = tk.Checkbutton(root, variable=self.filterGamesChckbxVar)
         ft = tkFont.Font(family='Times', size=14)
-        chkbx_filterComments["font"] = ft
-        chkbx_filterComments["fg"] = "#333333"
-        chkbx_filterComments["justify"] = "left"
-        chkbx_filterComments["text"] = "  Filter comments"
-        chkbx_filterComments.place(x=190, y=110, width=180, height=30)
-        chkbx_filterComments["offvalue"] = "0"
-        chkbx_filterComments["onvalue"] = "1"
+        self.chkbx_filterComments["font"] = ft
+        self.chkbx_filterComments["fg"] = "#333333"
+        self.chkbx_filterComments["justify"] = "left"
+        self.chkbx_filterComments["text"] = "  Filter comments"
+        self.chkbx_filterComments.place(x=190, y=110, width=180, height=30)
+        self.chkbx_filterComments["offvalue"] = "0"
+        self.chkbx_filterComments["onvalue"] = "1"
 
 
 if __name__ == "__main__":
