@@ -1,9 +1,6 @@
 # Reddit Comment Grabber
  Mostly for giveaway posts that have a lot of comments to sift through. This will grab every comment and place it in an excel spreadsheet for easier searching/filtering
 
-
-# There is currently no user-friendly release yet. That's soon to come. Below is how it should be used...
-
 To use:
 1)  Open program
 2)  Select a text file with the list of games you're giving away
