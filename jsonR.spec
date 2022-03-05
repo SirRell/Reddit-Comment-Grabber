@@ -20,7 +20,8 @@ a = Analysis(['jsonR.py'],
              win_private_assemblies=False,
              cipher=block_cipher,
              noarchive=False)
-a.datas += [('logo.png','D:\\Downloads\\Comment Grabber\\icon_transparent.png','DATA')]
+a.datas += [('logo.png', 'D:\\Downloads\\Comment Grabber\\icon_transparent.ico','DATA')]
+a.datas += [('client credentials.txt', 'D:\\Downloads\\Comment Grabber\\client credentials.txt', 'DATA')]
 pyz = PYZ(a.pure, a.zipped_data,
              cipher=block_cipher)
 

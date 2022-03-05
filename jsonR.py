@@ -1,3 +1,15 @@
+#### Script code needed to include the icon and client credentials file when the EXE is created. ####
+import os
+def resource_path(relative_path):
+    """ Get absolute path to resource, works for dev and for PyInstaller """
+    try:
+        # PyInstaller creates a temp folder and stores path in _MEIPASS
+        base_path = sys._MEIPASS
+    except Exception:
+        base_path = os.path.abspath(".")
+    return os.path.join(base_path, relative_path)
+################################################################
+
 import praw
 import xlwt
 from xlwt import Workbook
@@ -7,7 +19,6 @@ from tkinter import messagebox, font
 from RCG_GUI import GUI
 import json
 import re  # Delimiter separation
-
 
 # TODO: Make a way to easily ignore specific users' comments
 # TODO: Make things prettier
@@ -27,6 +38,8 @@ def open_gameList_file():
 
 
 gameList = None
+
+
 def read_gamesList_file(file):
     global gameList
     gameList = []
@@ -40,7 +53,7 @@ def read_gamesList_file(file):
 
 def ShowLoadingWindow(window):
     myFont = font.Font(family='Times', size=24)
-    label = Label(window, text="PLEASE WAIT\nGetting all of the comments!", font = myFont)
+    label = Label(window, text="PLEASE WAIT\nGetting all of the comments!", font=myFont)
     label.pack(fill='both', padx=50, pady=50)
     window.geometry(app.alignstr)
     window.resizable(width=False, height=False)
@@ -123,7 +136,7 @@ def GrabAllCommentsFromURL():
 def save_file():
     types = [("Excel Workbook", "*.xls")]
     try:
-        saveFile = asksaveasfile(initialfile="Untitled.xlsx", filetypes=types,
+        saveFile = asksaveasfile(initialfile="Untitled.xls", filetypes=types,
                                  defaultextension=".xls")
         # Saving global workbook
         wb.save(saveFile.name)
@@ -132,11 +145,13 @@ def save_file():
             save_file()
     except NameError:
         messagebox.askyesno("Question", "Are you sure you do NOT want to save the file?")
+    except PermissionError:
+        messagebox.showerror("Error", "Cannot save to file. Make sure it is not currently in use and try again.")
 
 
 if __name__ == "__main__":
     # --Initialize--
-    creds = "client credentials.txt"
+    creds = resource_path("client credentials.txt")
     with open(creds, 'r') as credsFile:
         clientCreds = json.load(credsFile)
 
@@ -161,7 +176,7 @@ if __name__ == "__main__":
         # -----------------------------------
     # Create a new tkinter window object
     window = Tk()
-    window.iconbitmap("icon_transparent.ico")
+    window.iconbitmap(resource_path("icon_transparent.ico"))
 
     # Fill the window with the GUI in other script
     app = GUI(window)
