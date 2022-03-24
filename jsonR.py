@@ -93,16 +93,23 @@ def GrabAllCommentsFromURL():
             def addComment(game=""):
                 nonlocal index
 
+                # Return if the comment or user has been deleted
+                if not comment.author or not comment.body:
+                    print("Returning")
+                    return
+
+                author = comment.author.name
+                body = comment.body
+
                 # This is an Excel function to have a random number in the cell
                 # Write the Excel function to the first cell
                 sheet1.write(index, 0, excelRandNum)
 
-                author = comment.author.name
                 # Write the Author of the comment in the next cell
                 sheet1.write(index, 1, author)
 
                 # Write the comment in the next cell
-                sheet1.write(index, 3, comment.body)
+                sheet1.write(index, 3, body)
 
                 if game != "":
                     sheet1.write(index, 2, game)
@@ -127,10 +134,10 @@ def GrabAllCommentsFromURL():
     except praw.exceptions.InvalidURL as e:
         messagebox.showerror("Error", f"{e} is not a reddit post link!")
         loadingWindow.destroy()
-    except Exception as e:
-        messagebox.showerror("Error",
-                             f"An error has ocurred:\n{e}\nPlease report bug at https://github.com/SirRell/Reddit-Comment-Grabber/issues")
-        loadingWindow.destroy()
+    # except Exception as e:
+    #     messagebox.showerror("Error",
+    #                          f"An error has ocurred:\n{e}\nPlease report bug at https://github.com/SirRell/Reddit-Comment-Grabber/issues")
+    #     loadingWindow.destroy()
 
 
 def save_file():
