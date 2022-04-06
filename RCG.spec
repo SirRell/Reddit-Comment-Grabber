@@ -7,7 +7,7 @@ datas = [(os.path.join(proot, 'praw.ini'), 'praw'), ('icon_transparent.ico', '.'
 block_cipher = None
 
 
-a = Analysis(['jsonR.py'],
+a = Analysis(['RCG.py'],
              pathex=[],
              binaries=[],
              datas=datas ,

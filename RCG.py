@@ -119,7 +119,7 @@ def GrabAllCommentsFromURL():
 
             if app.filterGamesChckbxVar.get():
                 for gameName in gameList:
-                    if gameName in comment.body:
+                    if gameName.lower() in comment.body.lower():
                         addComment(gameName)
             else:
                 addComment()
